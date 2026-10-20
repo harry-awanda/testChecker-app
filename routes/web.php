@@ -41,3 +41,12 @@ Route::middleware(['auth','role:teacher'])->group(function () {
     Route::post('/assessments/{assessment}/duplicate',[\App\Http\Controllers\AssessmentController::class,'duplicate'])->name('assessments.duplicate');
     Route::post('/assessments/{assessment}/draft',[\App\Http\Controllers\AssessmentController::class,'draft'])->middleware('throttle:10,1')->name('assessments.draft');
 });
+
+Route::middleware(['auth','role:teacher'])->group(function () {
+    Route::get('/assessments/{assessment}/workspace',[\App\Http\Controllers\WorkspaceController::class,'show'])->name('workspace.show');
+    Route::post('/assessments/{assessment}/submissions',[\App\Http\Controllers\WorkspaceController::class,'open'])->name('submissions.open');
+    Route::get('/revisions/{revision}',[\App\Http\Controllers\WorkspaceController::class,'showRevision'])->name('revisions.show');
+    Route::post('/submissions/{submission}/revise',[\App\Http\Controllers\WorkspaceController::class,'revise'])->name('submissions.revise');
+    Route::post('/revisions/{revision}/read',[\App\Http\Controllers\WorkspaceController::class,'read'])->middleware('throttle:40,1')->name('revisions.read');
+    Route::put('/revisions/{revision}/review',[\App\Http\Controllers\WorkspaceController::class,'review'])->name('revisions.review');
+});
