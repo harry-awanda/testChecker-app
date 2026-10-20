@@ -24,3 +24,20 @@ Route::middleware(['auth','role:superadmin'])->prefix('admin')->name('admin.')->
     Route::post('/students', [\App\Http\Controllers\AdminController::class,'student'])->name('students.store');
     Route::put('/students/{student}', [\App\Http\Controllers\AdminController::class,'student'])->name('students.update');
 });
+
+Route::middleware(['auth','role:teacher'])->group(function () {
+    Route::get('/settings/ai',[\App\Http\Controllers\AiSettingsController::class,'edit'])->name('ai.edit');
+    Route::put('/settings/ai',[\App\Http\Controllers\AiSettingsController::class,'update'])->name('ai.update');
+    Route::delete('/settings/ai',[\App\Http\Controllers\AiSettingsController::class,'destroy'])->name('ai.destroy');
+    Route::get('/settings/ai/models',[\App\Http\Controllers\AiSettingsController::class,'models'])->middleware('throttle:10,1')->name('ai.models');
+    Route::post('/settings/ai/test',[\App\Http\Controllers\AiSettingsController::class,'test'])->middleware('throttle:10,1')->name('ai.test');
+    Route::post('/settings/ai/test-image',[\App\Http\Controllers\AiSettingsController::class,'testImage'])->middleware('throttle:10,1')->name('ai.test-image');
+    Route::get('/assessments',[\App\Http\Controllers\AssessmentController::class,'index'])->name('assessments.index');
+    Route::post('/assessments',[\App\Http\Controllers\AssessmentController::class,'store'])->name('assessments.store');
+    Route::get('/assessments/{assessment}',[\App\Http\Controllers\AssessmentController::class,'show'])->name('assessments.show');
+    Route::get('/assessments/{assessment}/edit',[\App\Http\Controllers\AssessmentController::class,'edit'])->name('assessments.edit');
+    Route::put('/assessments/{assessment}',[\App\Http\Controllers\AssessmentController::class,'update'])->name('assessments.update');
+    Route::delete('/assessments/{assessment}',[\App\Http\Controllers\AssessmentController::class,'destroy'])->name('assessments.destroy');
+    Route::post('/assessments/{assessment}/duplicate',[\App\Http\Controllers\AssessmentController::class,'duplicate'])->name('assessments.duplicate');
+    Route::post('/assessments/{assessment}/draft',[\App\Http\Controllers\AssessmentController::class,'draft'])->middleware('throttle:10,1')->name('assessments.draft');
+});

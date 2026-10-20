@@ -1,24 +1,8 @@
 <?php
-
 namespace App\Providers;
-
+use App\Services\Ai\{AiProvider,GeminiProvider};
 use Illuminate\Support\ServiceProvider;
-
-class AppServiceProvider extends ServiceProvider
-{
-    /**
-     * Register any application services.
-     */
-    public function register(): void
-    {
-        //
-    }
-
-    /**
-     * Bootstrap any application services.
-     */
-    public function boot(): void
-    {
-        //
-    }
+class AppServiceProvider extends ServiceProvider {
+    public function register(): void { $this->app->bind(AiProvider::class,GeminiProvider::class); }
+    public function boot(): void { date_default_timezone_set('Asia/Jakarta'); }
 }
