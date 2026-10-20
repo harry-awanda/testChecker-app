@@ -17,4 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->dontFlash(['password', 'password_confirmation', 'current_password', 'api_key', 'pages', 'document', 'answers', 'questions']);
         $exceptions->dontReport([ValidationException::class]);
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, \Illuminate\Http\Request $request) {
+            if($request->expectsJson())return response()->json(['message'=>'Sesi berakhir. Masuk kembali untuk melanjutkan.'],401);
+        });
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, \Illuminate\Http\Request $request) {
+            if($request->expectsJson())return response()->json(['message'=>'Data atau halaman tidak ditemukan.'],404);
+        });
     })->create();

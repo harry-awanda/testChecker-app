@@ -16,9 +16,9 @@ function canvasUrl(canvas) {
     if(result.split(',')[1].length>6990510)throw new Error('Gambar hasil olahan melebihi 5 MB. Perkecil gambar.');
     return result;
 }
-export function workspace(assessmentId,questions) {
+export function workspace(assessmentId,questions,roster=[]) {
     return {
-        studentId:'',activeStudentId:'',revision:null,submissionId:null,answers:[],grades:[],history:[],photos:[],selectedPhoto:0,
+        studentId:'',activeStudentId:'',activeStudentLabel:'',revision:null,submissionId:null,answers:[],grades:[],history:[],photos:[],selectedPhoto:0,
         crop:{left:0,top:0,width:100,height:100},busy:false,message:'',dirty:false,
         init(){
             this.unloadHandler=(event)=>{if(this.dirty||this.photos.length){event.preventDefault();event.returnValue='';}};
@@ -38,7 +38,7 @@ export function workspace(assessmentId,questions) {
         },
         async openStudent(){
             if((this.dirty||this.photos.length)&&!confirm('Buka siswa ini? Perubahan teks yang belum disimpan dan foto pada tab akan dilepas.'))return;
-            await this.run(async()=>{const data=await api('/assessments/'+assessmentId+'/submissions','POST',{student_id:Number(this.studentId)});this.photos=[];this.selectedPhoto=0;this.apply(data);this.activeStudentId=this.studentId;this.message='Jawaban siswa dibuka. Unggah foto atau lanjutkan tinjauan tersimpan.';});
+            await this.run(async()=>{const data=await api('/assessments/'+assessmentId+'/submissions','POST',{student_id:Number(this.studentId)});this.photos=[];this.selectedPhoto=0;this.apply(data);this.activeStudentId=this.studentId;const active=roster.find(item=>Number(item.student_id)===Number(this.activeStudentId));this.activeStudentLabel=active?active.student_code+' / '+active.student_name:'';this.message='Jawaban siswa dibuka. Unggah foto atau lanjutkan tinjauan tersimpan.';});
         },
         async reload(){
             if(this.dirty&&!confirm('Buang perubahan teks yang belum disimpan dan muat data tersimpan?'))return;
@@ -86,6 +86,16 @@ export function workspace(assessmentId,questions) {
             this.photos.push({id,url,processed:this.revision.page_ids.includes(id)});
             this.selectedPhoto=index;this.crop={left:0,top:0,width:100,height:100};
         },
+        async replacePhoto(input,index){
+            const file=input.files?.[0];input.value='';if(!file)return;
+            if(!confirm('Ganti foto halaman ini? Setelah pembacaan baru, seluruh konfirmasi dan draf skor perlu ditinjau kembali.'))return;
+            await this.run(async()=>{
+                if(file.type==='application/pdf')throw new Error('Pengganti satu halaman harus berupa JPG, PNG, atau WebP.');
+                const data=await readDocument(file);const url='data:'+data.mime_type+';base64,'+data.data;
+                await imageFrom(url);this.photos[index].url=url;this.photos[index].processed=false;this.selectedPhoto=index;
+                this.crop={left:0,top:0,width:100,height:100};this.message='Foto pengganti siap. Baca kembali halaman sebelum melanjutkan penilaian.';
+            });
+        },
         move(index,direction){const next=index+direction;if(next<0||next>=this.photos.length)return;[this.photos[index],this.photos[next]]=[this.photos[next],this.photos[index]];this.selectedPhoto=next;},
         removePhoto(index){this.photos.splice(index,1);this.selectedPhoto=Math.max(0,Math.min(this.selectedPhoto,this.photos.length-1));},
         async rotate(index){
@@ -101,8 +111,8 @@ export function workspace(assessmentId,questions) {
                 this.photos[this.selectedPhoto].url=canvasUrl(canvas);this.crop={left:0,top:0,width:100,height:100};this.message='Potongan diterapkan; bagian di luar area telah dilepas dari foto di memori.';
             });
         },
-        async readAll(){
-            if((this.dirty||this.answers.some(a=>a.teacher_confirmed))&&!confirm('Pembacaan ulang membatalkan tinjauan dan draf skor. Lanjutkan?'))return;
+        async readAll(skipConfirmation=false){
+            if(!skipConfirmation&&(this.dirty||this.answers.some(a=>a.teacher_confirmed))&&!confirm('Pembacaan ulang membatalkan tinjauan dan draf skor. Lanjutkan?'))return;
             await this.run(async()=>{
                 for(let index=0;index<this.photos.length;index++){
                     const photo=this.photos[index];if(photo.processed)continue;
@@ -117,7 +127,7 @@ export function workspace(assessmentId,questions) {
         },
         async reread(index){
             if(!confirm('Baca ulang halaman ini? Seluruh konfirmasi jawaban dan draf skor akan dibatalkan.'))return;
-            this.photos[index].processed=false;await this.readAll();
+            this.photos[index].processed=false;await this.readAll(true);
         },
         releasePhotos(){if(confirm('Lepaskan semua foto dari memori tab? Untuk melihatnya lagi, unggah ulang dalam urutan semula.')){this.photos=[];this.selectedPhoto=0;this.message='Foto dilepas dari memori; transkripsi tersimpan tetap tersedia.';}},
         showSource(pageId){const index=this.photos.findIndex(p=>p.id===pageId);if(index<0){this.message='Foto sumber tidak berada di memori tab. Unggah ulang foto dalam urutan semula.';return;}this.selectedPhoto=index;},

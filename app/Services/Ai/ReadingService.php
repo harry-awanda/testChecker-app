@@ -27,7 +27,7 @@ class ReadingService {
         foreach($data['answers'] as $answer) {
             $q=$assessment->questions->firstWhere('number',$answer['question_number']);
             if(count($answer['selected_options'])!==count(array_unique($answer['selected_options']))) throw ValidationException::withMessages(['ai'=>'AI mengembalikan pilihan berulang dalam satu soal.']);
-            if(!$q || ($q->isObjective() && array_diff($answer['selected_options'],array_column($q->options,'key')))) throw ValidationException::withMessages(['ai'=>'AI mengembalikan nomor atau opsi yang tidak sesuai. Tidak ada hasil pembacaan yang disimpan.']);
+            if(!$q || (!$q->isObjective() && $answer['selected_options']) || ($q->isObjective() && array_diff($answer['selected_options'],array_column($q->options,'key')))) throw ValidationException::withMessages(['ai'=>'AI mengembalikan nomor atau opsi yang tidak sesuai. Tidak ada hasil pembacaan yang disimpan.']);
         }
         return $data;
     }

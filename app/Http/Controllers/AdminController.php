@@ -25,7 +25,10 @@ class AdminController extends Controller {
             'password'=>[$teacher ? 'nullable' : 'required','string','min:12','confirmed'], 'is_active'=>'required|boolean',
         ]);
         if (empty($data['password'])) unset($data['password']);
-        if ($teacher) $teacher->update($data);
+        if ($teacher) {
+            $teacher->update($data);
+            if(isset($data['password']) || !$teacher->is_active) DB::table('sessions')->where('user_id',$teacher->id)->delete();
+        }
         else User::create([...$data, 'role'=>'teacher']);
         return back()->with('success','Akun guru berhasil disimpan.');
     }

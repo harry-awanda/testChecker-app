@@ -1,6 +1,6 @@
 <?php
 // Inspect indexed bytes rather than working-tree files; never print matching secrets.
-exec('git diff --cached --name-only --diff-filter=ACMR', $files, $status);
+exec(in_array('--all', $argv, true) ? 'git ls-files' : 'git diff --cached --name-only --diff-filter=ACMR', $files, $status);
 if ($status !== 0) exit(1);
 $failed = [];
 foreach ($files as $file) {
