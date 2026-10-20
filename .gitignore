@@ -32,3 +32,4 @@
 /.playwright/
 /test-results/
 /tools/local-*
+/.local/

@@ -7,3 +7,5 @@
 <template x-for="(criterion,index) in grade.criteria_scores" :key="index"><label><span x-text="criterion.label"></span><input type="number" min="0" :max="criterion.max_score" step=".0001" x-model.number="criterion.overrideScore"></label></template><label>Alasan perubahan<textarea x-model="grade.overrideReason"></textarea></label><button class="button secondary" @click="overrideGrade(grade)" :disabled="busy||dirty">Simpan perubahan skor</button></details>
 <template x-for="change in grade.changes" :key="change.id"><p class="small muted" x-text="'Riwayat perubahan: '+change.reason"></p></template>
 </div></template></div>
+
+<div class="card" x-show="revision.changes?.length"><h2>Jejak penyesuaian skor</h2><template x-for="change in revision.changes" :key="change.id"><p class="small"><strong x-text="'Soal '+question(change.question_id).number+': '"></strong><span x-text="change.before.score+' ? '+change.after.score+' · '+change.reason"></span></p></template></div>

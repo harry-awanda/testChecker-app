@@ -21,11 +21,12 @@ class ReadingService {
         $data=Validator::make($result,[
             'page_unclear'=>'required|boolean','note'=>'present|string|max:5000','answers'=>'present|array|max:100',
             'answers.*.question_number'=>'required|integer|distinct','answers.*.transcription'=>'present|string|max:30000',
-            'answers.*.selected_options'=>'present|array|max:20','answers.*.selected_options.*'=>'required|string|max:10|distinct',
+            'answers.*.selected_options'=>'present|array|max:20','answers.*.selected_options.*'=>'required|string|max:10',
             'answers.*.uncertain'=>'required|boolean','answers.*.uncertainty_note'=>'present|string|max:5000','answers.*.location'=>'present|string|max:1000',
         ])->validate();
         foreach($data['answers'] as $answer) {
             $q=$assessment->questions->firstWhere('number',$answer['question_number']);
+            if(count($answer['selected_options'])!==count(array_unique($answer['selected_options']))) throw ValidationException::withMessages(['ai'=>'AI mengembalikan pilihan berulang dalam satu soal.']);
             if(!$q || ($q->isObjective() && array_diff($answer['selected_options'],array_column($q->options,'key')))) throw ValidationException::withMessages(['ai'=>'AI mengembalikan nomor atau opsi yang tidak sesuai. Tidak ada hasil pembacaan yang disimpan.']);
         }
         return $data;

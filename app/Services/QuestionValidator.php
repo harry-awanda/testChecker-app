@@ -8,12 +8,12 @@ class QuestionValidator {
         $data = Validator::make(['questions'=>$questions], [
             'questions'=>'required|array|min:1|max:100', 'questions.*.number'=>'required|integer|min:1|distinct',
             'questions.*.type'=>['required',Rule::in(array_keys(config('testchecker.question_types')))],
-            'questions.*.prompt'=>'required|string|max:20000','questions.*.weight'=>'required|numeric|min:0.01|max:10000',
+            'questions.*.prompt'=>'required|string|max:20000','questions.*.weight'=>'required|numeric|decimal:0,4|min:0.01|max:10000',
             'questions.*.options'=>'present|array|max:20', 'questions.*.options.*.key'=>'required|string|max:10', 'questions.*.options.*.text'=>'required|string|max:5000',
             'questions.*.answer_key'=>'present|array|max:20','questions.*.answer_key.*'=>'required|string|max:10',
             'questions.*.reference_answer'=>'nullable|string|max:30000', 'questions.*.criteria'=>'present|array|max:20',
             'questions.*.criteria.*.label'=>'required|string|max:255', 'questions.*.criteria.*.description'=>'required|string|max:5000',
-            'questions.*.criteria.*.max_score'=>'required|numeric|min:0.01|max:10000',
+            'questions.*.criteria.*.max_score'=>'required|numeric|decimal:0,4|min:0.01|max:10000',
             'questions.*.scoring_mode'=>['required',Rule::in(['all_or_nothing','partial'])],
         ])->validate()['questions'];
         foreach ($data as $index => &$question) {

@@ -49,10 +49,12 @@ class AssessmentController extends Controller {
     public function draft(Request $request, Assessment $assessment, AssessmentAccess $access, DocumentInput $input, QuestionDraftService $service) {
         $access->authorize($request->user(),$assessment);
         abort_if($assessment->locked_at,409);
-        $data = $request->validate(['text'=>'nullable|string|max:100000','document'=>'nullable|array']);
+        $data = $request->validate(['text'=>'nullable|string|max:100000','document'=>'nullable|array','current_questions'=>'nullable|array|max:100']);
         if (empty($data['text']) && empty($data['document'])) throw ValidationException::withMessages(['text'=>'Masukkan materi atau pilih dokumen.']);
+        if(!empty($data['document']) && !$request->attributes->get('photo_decrypted')) abort(415,'Gunakan kanal dokumen terenkripsi aplikasi.');
         $parts = empty($data['document'])?[]:[$input->part($data['document'],true)];
-        return response()->json(['questions'=>$service->generate($request->user(),$data['text'] ?? '',$parts)]);
+        $current=empty($data['current_questions'])?[]:app(QuestionValidator::class)->validate($data['current_questions']);
+        return response()->json(['questions'=>$service->generate($request->user(),$data['text'] ?? '',$parts,$current)]);
     }
     public function duplicate(Request $request, Assessment $assessment, AssessmentAccess $access) {
         $access->authorize($request->user(),$assessment);

@@ -50,3 +50,14 @@ Route::middleware(['auth','role:teacher'])->group(function () {
     Route::post('/revisions/{revision}/read',[\App\Http\Controllers\WorkspaceController::class,'read'])->middleware('throttle:40,1')->name('revisions.read');
     Route::put('/revisions/{revision}/review',[\App\Http\Controllers\WorkspaceController::class,'review'])->name('revisions.review');
 });
+
+Route::middleware(['auth','role:teacher'])->group(function () {
+    Route::post('/revisions/{revision}/grade/{question}',[\App\Http\Controllers\GradingController::class,'grade'])->middleware('throttle:60,1')->name('revisions.grade');
+    Route::put('/revisions/{revision}/grades/{grade}',[\App\Http\Controllers\GradingController::class,'override'])->name('revisions.grades.override');
+    Route::post('/revisions/{revision}/finalize',[\App\Http\Controllers\GradingController::class,'finalize'])->name('revisions.finalize');
+});
+
+Route::middleware(['auth','role:teacher'])->group(function () {
+    Route::get('/assessments/{assessment}/report',[\App\Http\Controllers\ReportController::class,'show'])->name('reports.show');
+    Route::get('/assessments/{assessment}/export/{format}',[\App\Http\Controllers\ReportController::class,'export'])->name('reports.export');
+});

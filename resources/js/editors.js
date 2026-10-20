@@ -23,7 +23,7 @@ export function questionEditor(initialQuestions,assessmentId) {
         async generate(){
             if(this.questions.length&&!confirm('Ganti daftar soal pada layar dengan draf AI? Perubahan yang belum disimpan akan hilang.'))return;
             this.busy=true;this.message='Menyusun draf soal dan rubrik…';
-            try{const result=await api('/assessments/'+assessmentId+'/draft','POST',{text:this.material,document:this.document});this.questions=result.questions;this.message='Draf siap. Tinjau semua soal, opsi, kunci, dan kriteria sebelum menyetujui.';this.document=null;}
+            try{const result=await api('/assessments/'+assessmentId+'/draft','POST',{text:this.material,document:this.document,current_questions:this.questions});this.questions=result.questions;this.message='Draf siap. Tinjau semua soal, opsi, kunci, dan kriteria sebelum menyetujui.';this.document=null;}
             catch(e){this.message=e.message;}finally{this.busy=false;}
         },
     };

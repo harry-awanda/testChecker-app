@@ -48,7 +48,7 @@ class WorkspaceController extends Controller {
                 $item=collect($reading['answers'])->firstWhere('question_number',$answer->question->number);
                 if($item) $sources[$data['page_id']]=[
                     'text'=>$item['transcription'],'selected_options'=>$item['selected_options'],
-                    'uncertain'=>$item['uncertain']||$reading['page_unclear'],'note'=>$item['uncertainty_note'],'location'=>$item['location'],
+                    'uncertain'=>$item['uncertain']||$reading['page_unclear'],'note'=>$item['uncertainty_note'],'location'=>$item['location'],'model_name'=>$request->user()->gemini_model,
                 ];
                 $selected=array_values(array_unique(array_merge(...array_map(fn($s)=>$s['selected_options'],array_values($sources)))));
                 $uncertain=!$sources || collect($sources)->contains(fn($s)=>$s['uncertain']);
@@ -69,13 +69,14 @@ class WorkspaceController extends Controller {
         $data=$request->validate([
             'edit_version'=>'required|integer|min:0','answers'=>'required|array|max:100','answers.*.question_id'=>'required|integer|distinct',
             'answers.*.transcription'=>'present|nullable|string|max:30000','answers.*.selected_options'=>'present|array|max:20',
-            'answers.*.selected_options.*'=>'required|string|max:10|distinct','answers.*.teacher_confirmed'=>'required|boolean',
+            'answers.*.selected_options.*'=>'required|string|max:10','answers.*.teacher_confirmed'=>'required|boolean',
         ]);
         $expected=$assessment->questions->pluck('id')->sort()->values()->all();
         $received=collect($data['answers'])->pluck('question_id')->map(fn($id)=>(int)$id)->sort()->values()->all();
         if($expected!==$received) throw ValidationException::withMessages(['answers'=>'Semua butir jawaban harus disertakan tepat satu kali.']);
         foreach($data['answers'] as $answer) {
             $q=$assessment->questions->find($answer['question_id']);
+            if(count($answer['selected_options'])!==count(array_unique($answer['selected_options']))) throw ValidationException::withMessages(['answers'=>'Pilihan jawaban tidak boleh berulang dalam satu soal.']);
             if($q->isObjective() && (array_diff($answer['selected_options'],array_column($q->options,'key')) || (in_array($q->type,['multiple_choice','true_false'],true)&&count($answer['selected_options'])>1))) throw ValidationException::withMessages(['answers'=>'Pilihan jawaban tidak sesuai jenis atau opsi soal.']);
             if(!$q->isObjective() && $answer['selected_options']) throw ValidationException::withMessages(['answers'=>'Jawaban subjektif tidak menggunakan pilihan opsi.']);
         }
@@ -94,7 +95,7 @@ class WorkspaceController extends Controller {
         return response()->json($this->state($revision->fresh()));
     }
     public function state(SubmissionRevision $revision):array {
-        return ['revision'=>$revision->load(['answers','grades.changes']),'submission_id'=>$revision->submission_id,
+        return ['revision'=>$revision->load(['answers','grades.changes','changes']),'submission_id'=>$revision->submission_id,
             'history'=>$revision->submission->revisions()->orderByDesc('version')->get(['id','version','status','final_score','finalized_at'])];
     }
 }
